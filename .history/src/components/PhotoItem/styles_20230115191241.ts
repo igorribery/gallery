@@ -6,7 +6,7 @@ export const Container = styled.div`
     padding: 10px;
 
     img {
-        max-width: 100%;
+        max-width: 100px;
         display: block;
         margin-bottom: 10px;
         border-radius: 10px;
