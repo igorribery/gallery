@@ -1,26 +1,31 @@
 import * as C from './App.styles';
-import * as Photos from './services/photos';
-import { useState, useEffect, FormEvent } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Photo } from './types/Photo';
+import * as Photos from './services/Photos';
 import { PhotoItem } from './components/PhotoItem';
+
 
 
 const App = () => {
   
   const [loading, setLoading] = useState(false);
+  const [list, setList] = useState<Photo[]>([]);
   const [uploading, setUpLoading] = useState(false);
-  const [photos, setPhotos] = useState<Photo[]>([]);
 
   useEffect(() => {
-    const getPhotos = async () => {
-      setLoading(true);
 
-      setPhotos(await Photos.getAll());
-
-      setLoading(false);
-    }
     getPhotos();
+
   }, []);
+
+  const getPhotos = async () => {
+
+    setLoading(true);
+    setList(await Photos.getAll());
+    setLoading(false);
+
+  };
+  
 
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,59 +40,69 @@ const App = () => {
       setUpLoading(false);
 
       if(result instanceof Error) {
-
-        alert(`${result.name} - ${result.message}`)
+        
+       alert(`${result.name} - ${result.message}`);
 
       } else {
-
-        let newPhotoList = [...photos];
+        let newPhotoList = [...list];
         newPhotoList.push(result);
-        setPhotos(newPhotoList);
+        setList(newPhotoList);
       }
     }
+}
 
-  }
+const handleDelete = async (name: string) => {
+
+    await Photos.deletePhoto(name);
+
+    getPhotos();
+}
 
 
+
+  
 
   return (
     <C.Container>
       <C.Area>
-        <C.Header>Galeria de Fotos</C.Header>
+        <C.Header>Galeria De Fotos</C.Header>
 
-        <C.UploadForm method="POST" onSubmit={handleFormSubmit}>
+        { 
+          <C.UploadForm method='POST' onSubmit={handleFormSubmit} >
             <input type='file' name='image' />
-            <input type='submit' name='Enviar' />
+            <input type='submit' name='enviar'/>
 
-            {uploading && "Enviando..."}
+            {uploading && 'Enviando...'}
 
-        </C.UploadForm>
+          </C.UploadForm> 
+        }
 
         {loading &&
-            <C.ScreenWarning>
-              <div className='emoji'>🤚</div>
-              <div className='loading'>Carregando...</div>
-            </C.ScreenWarning>
+          <C.ScreenWarning>
+            <div className='emoji'>🤚</div>
+            <div className='loading'>Carregando...</div>
+          </C.ScreenWarning>
+        }
+        
+          {!loading && list.length > 0 &&
+            <C.PhotoList>
+                {list.map((item, index) => (
+                  <PhotoItem key={index} url={item.url} name={item.name} onDelete={handleDelete} />
+                  
+                ))}
+            </C.PhotoList>
+        
+          }
+
+        {!loading && list.length === 0 &&
+          <C.ScreenWarning>
+            <div className='emoji'>😢</div>
+            <div className='loading'>Não há fotos cadastradas.</div>
+          </C.ScreenWarning>
+        
         }
 
-        {!loading && photos.length > 0 &&
-          <C.PhotoList>
-              {photos.map((item, index) => (
-                <PhotoItem 
-                  key={index}  
-                  name={item.name}
-                  url={item.url}
-                />
-              ))}
-          </C.PhotoList>
-        }
 
-        {!loading && photos.length === 0 &&
-            <C.ScreenWarning>
-              <div className='emoji'>😢</div>
-              <div className='loading'>Não há fotos cadastradas.</div>
-            </C.ScreenWarning>
-        }
       </C.Area>
     </C.Container>
   )
